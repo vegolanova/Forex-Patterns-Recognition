@@ -17,16 +17,17 @@ date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
 # performanceArr = []
 # patForRec = []
 
-def percentChange(startPoint, currentPoint) :
+def percentChange(startPoint, currentPoint):
+    standart_deviation = 0.00001
 
-    #handling negative infinity
     try:
-        x = (((float(currentPoint) - startPoint)/abs(startPoint))*100.00)
-        if x == 0.0 :
-            return 0.00000000001
-        else: return x
+        deviation = (((float(currentPoint) - startPoint)/abs(startPoint))*100.00)
+        if deviation == 0.0:
+            return standart_deviation
+        else:
+            return deviation
     except:
-        return 0.0000001
+     return standart_deviation
 
 
 
