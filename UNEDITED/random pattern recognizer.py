@@ -12,6 +12,7 @@ date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
 
 
 def percentChange(startPoint, currentPoint):
+  '''Функция вычисляет процентную разницу между предыдущей и текущей точкой на графике.'''
     standart_deviation = 0.00001
 
     try:
@@ -23,9 +24,8 @@ def percentChange(startPoint, currentPoint):
     except:
      return standart_deviation
 
-def patternStorage() :
+def patternStorage():
     patStartTime = time.time()
-    # avgLine = ((bid+ask)/2)
     x = len(avgLine)-60
     y = 11
     
@@ -47,12 +47,12 @@ def patternStorage() :
         y += 1
 
     patEndTime = time.time()
-    print(len(patternArr))
-    print(len(performanceArr))
     print('Pattern storage took: ', patEndTime-patStartTime, 'seconds')
 
 
 def currentPattern():
+  '''Функция вычисляет список процентной разницы 30 взятых точек'''
+  
     global patForRec
     
     patForRec = [percentChange(avgLine[-31], avgLine[i]) for i in range(-30, 0, 1)]
@@ -60,7 +60,8 @@ def currentPattern():
     print(patForRec)
 
 def patternRecognition():
-
+  '''Функция находит паттерны на графике, которые схожи между собой на 50% и больше.'''
+  
     predictedOutcomesArr = []
     patternFound = 0
     plotPatternArray = []
@@ -110,6 +111,7 @@ def patternRecognition():
         plt.show()
 
 def graphRawForex():
+  '''Функция возвращает график, визуализирующий исходные данные'''
 
     fig = plt.figure(figsize=(10, 7))
     ax1 = plt.subplot2grid((90, 90), (0, 0), rowspan=90, colspan=90)
@@ -144,10 +146,11 @@ while to_what < dataLength:
     performanceArr = []
     patForRec = []
 
-    patternStorage()
-    currentPattern()
-    patternRecognition()
+    graphRawForex() #возвращает график со всеми данными
+    patternStorage() #нужно для сохранения точек для дальнейшего сравнения
+    currentPattern() #нужно для формирования паттернов для сравнения
+  patternRecognition() #собственно ищет паттерны
     time_consumed = time.time() - total_start
-    print('Entire processing time took:', time_consumed, 'seconds')
+    print('Entire processing time took:', time_consumed, 'seconds') #сколько времени занял весь процесс анализации
     move_on = input('press ENTER to continue...')
     to_what += 1
