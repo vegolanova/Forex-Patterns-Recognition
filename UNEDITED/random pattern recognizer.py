@@ -4,38 +4,38 @@ import numpy as np
 import functools
 import time
 
-
 total_start_time = time.time()
 
 date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
-                         delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
+                               delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
 
 
 def percent_change(starting_point, current_point):
-  '''Функция вычисляет процентную разницу между предыдущей и текущей точкой на графике.'''
+    '''Функция вычисляет процентную разницу между предыдущей и текущей точкой на графике.'''
     standart_deviation = 0.00001
 
     try:
-        deviation = (((float(current_point) - starting_point)/abs(starting_point))*100.00)
+        deviation = (((float(current_point) - starting_point) / abs(starting_point)) * 100.00)
         if deviation == 0.0:
             return standart_deviation
         else:
             return deviation
     except:
-     return standart_deviation
+        return standart_deviation
+
 
 def pattern_storage():
     pat_start_time = time.time()
-    x = len(average_line)-60
+    x = len(average_line) - 60
     y = 11
-    
+
     while y < x:
-        pattern = [percent_change(average_line[y-30], average_line[y-i]) for i in range(29, -1, -1)]       
-        outcome_range = average_line[y+20:y+30]
+        pattern = [percent_change(average_line[y - 30], average_line[y - i]) for i in range(29, -1, -1)]
+        outcome_range = average_line[y + 20:y + 30]
         current_point = average_line[y]
 
         try:
-            avgOutcome = functools.reduce(lambda x, y : x + y, outcome_range)/len(outcome_range)
+            avgOutcome = functools.reduce(lambda x, y: x + y, outcome_range) / len(outcome_range)
         except Exception as e:
             print(str(e))
             avgOutcome = 0
@@ -51,26 +51,28 @@ def pattern_storage():
 
 
 def current_pattern():
-  '''Функция вычисляет список процентной разницы 30 взятых точек'''
-  
-    global patern_for_recognition
-    
-    patern_for_recognition = [percent_change(average_line[-31], average_line[i]) for i in range(-30, 0, 1)]
+    '''Функция вычисляет список процентной разницы 30 взятых точек'''
 
-    print(patern_for_recognition)
+    global pattern_for_recognition
+
+    pattern_for_recognition = [percent_change(average_line[-31], average_line[i]) for i in range(-30, 0, 1)]
+
+    print(pattern_for_recognition)
+
 
 def pattern_recognizer():
-  '''Функция находит паттерны на графике, которые схожи между собой на 50% и больше.'''
-  
-    predicted_outcomes = []
+    '''Функция находит паттерны на графике, которые схожи между собой на 50% и больше.'''
+
+    predicted_results = []
     found_patterns = 0
     plot_pattern_list = []
 
     for each_pattern in pattern_list:
-        similarity_of_ps = [(100.00 - abs(percent_change(each_pattern[i], pattern_for_recognition[i]))) for i in range(30)]
+        similarity_of_ps = [(100.00 - abs(percent_change(each_pattern[i], pattern_for_recognition[i]))) for i in
+                            range(30)]
 
         similarity = (sum(map(float, similarity_of_ps))) / 30.0
-        
+
         if similarity > 50:
             patdex = pattern_list.index(each_pattern)
 
@@ -80,37 +82,37 @@ def pattern_recognizer():
             plot_pattern_list.append(each_pattern)
 
     if found_patterns == 1:
-        fig = plt.figure(figsize=(10,6))
+        fig = plt.figure(figsize=(10, 6))
 
         for each_pattern in plot_pattern_list:
             future_points = pattern_list.index(each_pattern)
 
-            if performance_list[future_points] > pattern_for_recognition[29] :
+            if performance_list[future_points] > pattern_for_recognition[29]:
                 pcolor = '#24bc00'
-            else :
+            else:
                 pcolor = '#d40000'
 
-            plt.plot(xp, eachPattern)
+            plt.plot(xp, each_pattern)
             predicted_results.append(performance_list[future_points])
 
-            plt.scatter(35, performance_list[future_points], c=pcolor, alpha=.3 )
+            plt.scatter(35, performance_list[future_points], c=pcolor, alpha=.3)
 
-        real_outcome_range = all_data[to_what + 20:toWhat + 30]
-        real_average_outcome = functools.reduce(lambda x, y : x + y, real_outcome_range)/len(real_outcome_range)
+        real_outcome_range = all_data[to_what + 20:to_what + 30]
+        real_average_outcome = functools.reduce(lambda x, y: x + y, real_outcome_range) / len(real_outcome_range)
         real_move = percent_change(all_data[to_what], real_average_outcome)
-        predicted_average_results = functools.reduce(lambda x, y : x + y, predicted_results)/len(predicted_results)
+        predicted_average_results = functools.reduce(lambda x, y: x + y, predicted_results) / len(predicted_results)
 
-        plt.scatter(40, real_moveme, c='#54fff7', s=25)
+        plt.scatter(40, real_move, c='#54fff7', s=25)
         plt.scatter(40, predicted_average_results, c='b', s=25)
 
-
-        plt.plot(xp, pattern_for_recognition, '#54fff7', linewidth = 3)
+        plt.plot(xp, pattern_for_recognition, '#54fff7', linewidth=3)
         plt.grid(True)
         plt.title('Pattern recognition')
         plt.show()
 
+
 def raw_graph():
-  '''Функция возвращает график, визуализирующий исходные данные'''
+    '''Функция возвращает график, визуализирующий исходные данные'''
 
     fig = plt.figure(figsize=(10, 7))
     ax1 = plt.subplot2grid((90, 90), (0, 0), rowspan=90, colspan=90)
@@ -125,31 +127,32 @@ def raw_graph():
         label.set_rotation(10)
 
     ax1_2 = ax1.twinx()
-    ax1_2.fill_between(date, 0, (ask-bid), facecolor='g', alpha=.3)
+    ax1_2.fill_between(date, 0, (ask - bid), facecolor='g', alpha=.3)
 
     plt.subplots_adjust(bottom=.23)
 
     plt.grid(True)
     plt.show()
 
+
 length_of_data = int(bid.shape[0])
 print('Data length is', length_of_data)
 
-to_what= 37000
-all_data = ((bid+ask)/2)
+to_what = 37000
+all_data = ((bid + ask) / 2)
 
 while to_what < length_of_data:
-    average_line = ((bid+ask)/2)
+    average_line = ((bid + ask) / 2)
     average_line = average_line[:to_what]
     pattern_list = []
     performance_list = []
-    patern_for_recognition = []
+    pattern_for_recognition = []
 
-    raw_graph() #возвращает график со всеми данными
-    pattern_storage() #нужно для сохранения точек для дальнейшего сравнения
-    current_pattern() #нужно для формирования паттернов для сравнения
-  pattern_recognizer() #собственно ищет паттерны
-    time_consumed = time.time() - total_start
-    print('Entire processing time took:', time_consumed, 'seconds') #сколько времени занял весь процесс анализации
+    raw_graph()  # возвращает график со всеми данными
+    pattern_storage()  # нужно для сохранения точек для дальнейшего сравнения
+    current_pattern()  # нужно для формирования паттернов для сравнения
+    pattern_recognizer()  # собственно ищет паттерны
+    time_consumed = time.time() - total_start_time
+    print('Entire processing time took:', time_consumed, 'seconds')  # сколько времени занял весь процесс анализации
     move_on = input('press ENTER to continue...')
     to_what += 1
