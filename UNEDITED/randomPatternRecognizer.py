@@ -4,6 +4,7 @@ import numpy as np
 import functools
 import time
 
+
 total_start_time = time.time()
 
 date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
@@ -132,27 +133,30 @@ def raw_graph():
     plt.subplots_adjust(bottom=.23)
 
     plt.grid(True)
-    plt.show()
+    
+    return plt
 
 
-length_of_data = int(bid.shape[0])
-print('Data length is', length_of_data)
+if __name__ == '__main__':
+	
+    length_of_data = int(bid.shape[0])
+    print('Data length is', length_of_data)
 
-to_what = 37000
-all_data = ((bid + ask) / 2)
+    to_what = 37000
+    all_data = ((bid + ask) / 2)
 
-while to_what < length_of_data:
-    average_line = ((bid + ask) / 2)
-    average_line = average_line[:to_what]
-    pattern_list = []
-    performance_list = []
-    pattern_for_recognition = []
+    while to_what < length_of_data:
+        average_line = ((bid + ask) / 2)
+        average_line = average_line[:to_what]
+        pattern_list = []
+        performance_list = []
+        pattern_for_recognition = []
 
-    raw_graph()  # возвращает график со всеми данными
-    pattern_storage()  # нужно для сохранения точек для дальнейшего сравнения
-    current_pattern()  # нужно для формирования паттернов для сравнения
-    pattern_recognizer()  # собственно ищет паттерны
-    time_consumed = time.time() - total_start_time
-    print('Entire processing time took:', time_consumed, 'seconds')  # сколько времени занял весь процесс анализации
-    move_on = input('press ENTER to continue...')
-    to_what += 1
+        # raw_graph()  # возвращает график со всеми данными
+        pattern_storage()  # нужно для сохранения точек для дальнейшего сравнения
+        current_pattern()  # нужно для формирования паттернов для сравнения
+        pattern_recognizer()  # собственно ищет паттерны
+        time_consumed = time.time() - total_start_time
+        print('Entire processing time took:', time_consumed, 'seconds')  # сколько времени занял весь процесс анализации
+        move_on = input('press ENTER to continue...')
+        to_what += 1
