@@ -11,6 +11,7 @@ date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
                                delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
 
 
+
 def percent_change(starting_point, current_point):
     '''Функция вычисляет процентную разницу между предыдущей и текущей точкой на графике.'''
     standart_deviation = 0.00001
@@ -25,7 +26,7 @@ def percent_change(starting_point, current_point):
         return standart_deviation
 
 
-def pattern_storage():
+def pattern_storage(average_line,pattern_list,performance_list):
     pat_start_time = time.time()
     x = len(average_line) - 60
     y = 11
@@ -51,23 +52,22 @@ def pattern_storage():
     print('Pattern storage took: ', pat_end_time - pat_start_time, 'seconds')
 
 
-def current_pattern():
+def current_pattern(average_line):
     '''Функция вычисляет список процентной разницы 30 взятых точек'''
 
-    global pattern_for_recognition
-
+    
     pattern_for_recognition = [percent_change(average_line[-31], average_line[i]) for i in range(-30, 0, 1)]
 
-    print(pattern_for_recognition)
+    return pattern_for_recognition
 
 
-def pattern_recognizer():
+def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all_data,to_what):
     '''Функция находит паттерны на графике, которые схожи между собой на 50% и больше.'''
 
     predicted_results = []
     found_patterns = 0
     plot_pattern_list = []
-
+    
     for each_pattern in pattern_list:
         similarity_of_ps = [(100.00 - abs(percent_change(each_pattern[i], pattern_for_recognition[i]))) for i in
                             range(30)]
@@ -109,7 +109,7 @@ def pattern_recognizer():
         plt.plot(xp, pattern_for_recognition, '#54fff7', linewidth=3)
         plt.grid(True)
         plt.title('Pattern recognition')
-        plt.show()
+        return plt
 
 
 def raw_graph():
@@ -137,26 +137,4 @@ def raw_graph():
     return plt
 
 
-if __name__ == '__main__':
-	
-    length_of_data = int(bid.shape[0])
-    print('Data length is', length_of_data)
 
-    to_what = 37000
-    all_data = ((bid + ask) / 2)
-
-    while to_what < length_of_data:
-        average_line = ((bid + ask) / 2)
-        average_line = average_line[:to_what]
-        pattern_list = []
-        performance_list = []
-        pattern_for_recognition = []
-
-        # raw_graph()  # возвращает график со всеми данными
-        pattern_storage()  # нужно для сохранения точек для дальнейшего сравнения
-        current_pattern()  # нужно для формирования паттернов для сравнения
-        pattern_recognizer()  # собственно ищет паттерны
-        time_consumed = time.time() - total_start_time
-        print('Entire processing time took:', time_consumed, 'seconds')  # сколько времени занял весь процесс анализации
-        move_on = input('press ENTER to continue...')
-        to_what += 1

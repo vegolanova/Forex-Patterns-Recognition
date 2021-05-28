@@ -1,9 +1,17 @@
-from keyboards import start_keyboard,only_search_keyboard
+from keyboards import start_keyboard,only_search_keyboard,continue_keyboard
 import requests
 from time import sleep
 import json
 import os
-from UNEDITED.randomPatternRecognizer import raw_graph
+import numpy as np
+import functools
+import time
+import matplotlib.dates as mdates
+from UNEDITED.randomPatternRecognizer import raw_graph,pattern_recognizer,pattern_storage,current_pattern
+
+TOKEN = ""
+
+
 class BotHandler:
 
     def __init__(self, token):
@@ -16,6 +24,7 @@ class BotHandler:
         params = {'timeout': timeout}
         response = requests.get(self.api_url + method, params)
         result_json = response.json()['result']
+        print(result_json)
         return result_json
 
     def get_last_update(self):
@@ -53,79 +62,129 @@ class BotHandler:
             print(err)
 
     def send_message(self, chat_id, text, parse_mode=None, reply=None):
+        if reply==None:
+            pass
+        else:
+            reply = json.dumps(reply)
         params = {'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode, 'reply_markup': reply}
         method = 'sendMessage'
         resp = requests.post(self.api_url + method, params)
         return resp
 
-    def send_photo(self, chat_id, photo,caption=None,parse_mode=None,reply_markup=None):
+    def send_photo(self, chat_id, photo,caption=None,parse_mode=None,reply=None):
+        if reply==None:
+            pass
+        else:
+            reply = json.dumps(reply)
         files = {'photo': open(photo, 'rb')}
-        params = {'chat_id': chat_id, 'caption':caption, 'parse_mode': parse_mode,"reply_markup":reply_markup}
+        params = {'chat_id': chat_id, 'caption':caption, 'parse_mode': parse_mode,"reply_markup":reply}
         method = 'sendPhoto'
         resp= requests.post(self.api_url+method, files=files, data=params)
         return resp
-
-    def answer_callback_query(self, callback_query_id,text=None,show_alert=None,url=None,cache_time=None):
-        params = {'callback_query_id': callback_query_id,'text':text,'show_alert':show_alert,'url':url,'cache_time':cache_time}
-        method = 'answerCallbackQuery'
-        resp = requests.post(self.api_url + method, params)
-        return resp
     
     def edit_message_text(self, chat_id, message_id,text,parse_mode=None,reply=None):
+        if reply==None:
+            pass
+        else:
+            reply = json.dumps(reply)
         params = {'chat_id': chat_id, 'message_id': message_id,'text':text,'parse_mode':parse_mode,'reply_markup':reply}
         method = 'editMessageText'
         resp = requests.post(self.api_url + method, params)
         return resp
+    
+    def edit_message_reply_markup(self, chat_id,message_id,reply):
+        if reply==None:
+            pass
+        else:
+            reply = json.dumps(reply)
+        params = {'chat_id': chat_id,'message_id':message_id,'reply_markup':reply}
+        method = 'editMessageReplyMarkup'
+        resp = requests.post(self.api_url + method, params)
+        return resp
 
+bot = BotHandler(TOKEN)
 
+def plot_decorator(chat_id,reply_markup):
+    def inner(func):
+        def send_plot(*args):
+            plt = func(*args)
+            plt.savefig("data_plot.png", format='png')
+            bot.send_photo(chat_id,"data_plot.png",reply=reply_markup)
+            os.remove("data_plot.png")
+        return send_plot
+    return inner
 
-token = "1296005096:AAF9495V7dGFti8W8jGb37vqirAf2pARUTM"
-bot = BotHandler(token)
 
 
 def main():
     while True:
-        try:
-            last_update = bot.get_last_update()
-            if last_update != None:
-                if "message" in last_update:
-                    message_data = last_update["message"]
-                    if message_data["text"] == "/start":
-                        chat_name = message_data["chat_name"]
-                        try:
-                            bot.send_message(message_data["chat_id"], 
-                            f"<b>Приветствую {chat_name}</b>,\nНаш бот принимает Форекс bid/ask "\
-                            "данные о паре валют и анализирует схожие между собой паттерны"\
-                            "\nпрогнозируя прибыльные и убыточные исходы трейдинга.","HTML")
-                            bot.send_message(message_data["chat_id"], "Выберите опцию:","HTML",json.dumps(start_keyboard))
-                        except Exception as err:
-                            print(err)
-                    
-                if "callback_query" in last_update:
-                    callback_query = last_update["callback_query"]
-                    print(callback_query)
-                    if callback_query['data'] =="show_data":
-                        try:
-                            bot.edit_message_text(callback_query['chat_id'],callback_query['message_id'],"Выберите опцию:","HTML")
-                            plt = raw_graph()
-                            plt.savefig("data_plot.png", format='png')
-                            bot.send_photo(callback_query['chat_id'],"data_plot.png",reply_markup=json.dumps(only_search_keyboard))
-                            os.remove("data_plot.png")
-                        except Exception as err:
-                            print(err)
-        except Exception as err:
-            print(err)
-                    
-                    
-                    
-
-                    
-
-                
-        else:
-            continue
         
+        last_update = bot.get_last_update()
+        if last_update != None:
+            if "message" in last_update:
+                message_data = last_update["message"]
+                if message_data["text"] == "/start":
+                    count=0
+                    for message in bot.get_updates():
+                        try:
+                            if message["message"]["text"]=="/start":
+                                count+=1
+                        except:
+                            pass
+                        if count>2:
+                            continue 
+                    if count==1:
+                        chat_name = message_data["chat_name"]
+                        bot.send_message(message_data["chat_id"], 
+                        f"<b>Приветствую {chat_name}</b>,\nНаш бот принимает Форекс bid/ask "\
+                        "данные о паре валют и анализирует схожие между собой паттерны"\
+                        "\nпрогнозируя прибыльные и убыточные исходы трейдинга.","HTML")
+                        bot.send_message(message_data["chat_id"], "Выберите опцию:","HTML",start_keyboard)
+                    
+                
+            if "callback_query" in last_update:
+                callback_query = last_update["callback_query"]
+                if callback_query['data'] =="show_data":
+                    bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                    plot_decorator(callback_query['chat_id'],only_search_keyboard)(raw_graph)()
+                if callback_query['data'] =="pattern_search":
+                    bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                    date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
+                            delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
+                    length_of_data = int(bid.shape[0])
+                    print('Data length is', length_of_data)
 
+                    to_what = 37000
+                    all_data = ((bid + ask) / 2)
+                    average_line = ((bid + ask) / 2)
+                    average_line = average_line[:to_what]
+                    pattern_list = []
+                    performance_list = []
+                    pattern_storage(average_line,pattern_list, performance_list) 
+                    pattern_for_recognition =  current_pattern(average_line) 
+                    plot_decorator(callback_query['chat_id'],continue_keyboard)(pattern_recognizer)(pattern_list,pattern_for_recognition,performance_list,all_data,to_what)
+                        
+                if callback_query['data']=="continue_search":
+                    if (to_what+1)>=length_of_data:
+                        bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                        bot.send_message(callback_query["chat_id"],"Паттерны закончились",parse_mode="HTML",reply=start_keyboard)
+                    else:
+                        bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                        to_what+=1
+                        average_line = ((bid + ask) / 2)
+                        average_line = average_line[:to_what]
+                        pattern_list = []
+                        performance_list = []
+                        pattern_storage(average_line,pattern_list, performance_list) 
+                        pattern_for_recognition =  current_pattern(average_line) 
+                        plot_decorator(callback_query['chat_id'],continue_keyboard)(pattern_recognizer)(pattern_list,pattern_for_recognition,performance_list,all_data,to_what)
+
+                if callback_query['data']=="stop_search":
+                    bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)   
+                    bot.send_message(callback_query["chat_id"],"Вы остановили поиск",parse_mode="HTML",reply=start_keyboard)  
+                        
+            else:
+                continue
         sleep(4)
 
 
