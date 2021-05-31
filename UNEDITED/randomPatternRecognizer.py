@@ -23,13 +23,13 @@ def PercentChange(starting_point, current_point):
 
 def pattern_storage(average_line,pattern_list,performance_list):
     pat_start_time = time.time()
-    x = len(average_line) - 60
-    y = 11
+    avg_line_for_prediction = len(average_line) - 60
+    starting_point = 11
 
-    while y < x:
-        pattern = [PercentChange(average_line[y - 30], average_line[y - i]) for i in range(29, -1, -1)]
-        outcome_range = average_line[y + 20:y + 30]
-        current_point = average_line[y]
+    while starting_point < avg_line_for_prediction:
+        pattern = [PercentChange(average_line[starting_point - 30], average_line[starting_point - i]) for i in range(29, -1, -1)]
+        outcome_range = average_line[starting_point + 20:starting_point + 30]
+        current_point = average_line[starting_point]
 
         try:
             avgOutcome = functools.reduce(lambda x, y: x + y, outcome_range) / len(outcome_range)
@@ -41,7 +41,7 @@ def pattern_storage(average_line,pattern_list,performance_list):
         pattern_list.append(pattern)
         performance_list.append(future_outcome)
 
-        y += 1
+        starting_point += 1
 
     pat_end_time = time.time()
     
