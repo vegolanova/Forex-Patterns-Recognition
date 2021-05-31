@@ -1,4 +1,4 @@
-from keyboards import start_keyboard,only_search_keyboard,continue_keyboard
+from keyboards import start_keyboard,only_search_keyboard,continue_keyboard,choice_keyboard
 import requests
 from time import sleep
 import json
@@ -9,7 +9,8 @@ import time
 import matplotlib.dates as mdates
 from UNEDITED.randomPatternRecognizer import raw_graph,pattern_recognizer,pattern_storage,current_pattern
 
-TOKEN = ""
+TOKEN = "1747677640:AAFdtPvK4GqQgtA5geERzcNrWv6Ene-v8L8"
+
 
 
 class BotHandler:
@@ -82,13 +83,13 @@ class BotHandler:
         resp= requests.post(self.api_url+method, files=files, data=params)
         return resp
     
-    def edit_message_text(self, chat_id, message_id,text,parse_mode=None,reply=None):
+    def edit_message_caption(self, chat_id, message_id,caption,parse_mode=None,reply=None):
         if reply==None:
             pass
         else:
             reply = json.dumps(reply)
-        params = {'chat_id': chat_id, 'message_id': message_id,'text':text,'parse_mode':parse_mode,'reply_markup':reply}
-        method = 'editMessageText'
+        params = {'chat_id': chat_id, 'message_id': message_id,'caption':caption,'parse_mode':parse_mode,'reply_markup':reply}
+        method = 'editMessageCaption'
         resp = requests.post(self.api_url + method, params)
         return resp
     
@@ -104,88 +105,146 @@ class BotHandler:
 
 bot = BotHandler(TOKEN)
 
-def plot_decorator(chat_id,reply_markup):
+
+def plot_decorator(chat_id,reply_markup,caption=None):
     def inner(func):
         def send_plot(*args):
             plt = func(*args)
-            plt.savefig("data_plot.png", format='png')
-            bot.send_photo(chat_id,"data_plot.png",reply=reply_markup)
-            os.remove("data_plot.png")
+            if plt==True:
+                bot.send_message(chat_id,"Паттерны закончились поменяйте процент схожести",parse_mode=None,reply=start_keyboard)
+            else:
+                plt.savefig("data_plot.png", format='png')
+                bot.send_photo(chat_id,"data_plot.png",reply=reply_markup,caption=caption)
+                os.remove("data_plot.png")
         return send_plot
     return inner
 
 
 
 def main():
-    while True:
-        
-        last_update = bot.get_last_update()
-        if last_update != None:
-            if "message" in last_update:
-                message_data = last_update["message"]
-                if message_data["text"] == "/start":
-                    count=0
-                    for message in bot.get_updates():
-                        try:
-                            if message["message"]["text"]=="/start":
-                                count+=1
-                        except:
-                            pass
-                        if count>2:
-                            continue 
-                    if count==1:
-                        chat_name = message_data["chat_name"]
-                        bot.send_message(message_data["chat_id"], 
-                        f"<b>Приветствую {chat_name}</b>,\nНаш бот принимает Форекс bid/ask "\
-                        "данные о паре валют и анализирует схожие между собой паттерны"\
-                        "\nпрогнозируя прибыльные и убыточные исходы трейдинга.","HTML")
+    try:
+        similarity_percentage = 50
+        while True:
+            
+            last_update = bot.get_last_update()
+            if last_update != None:
+                if "message" in last_update:
+                    message_data = last_update["message"]
+                    if message_data["text"] == "/start":
+                        count=0
+                        for message in bot.get_updates():
+                            try:
+                                if message["message"]["text"]=="/start":
+                                    count+=1
+                            except:
+                                pass
+                            if count>2:
+                                continue 
+                        if count==1:
+                            chat_name = message_data["chat_name"]
+                            bot.send_message(message_data["chat_id"], 
+                            f"<b>Приветствую {chat_name}</b>,\nНаш бот принимает Форекс bid/ask "\
+                            "данные о паре валют и анализирует схожие между собой паттерны"\
+                            "\nпрогнозируя прибыльные и убыточные исходы трейдинга.","HTML")
+                            bot.send_message(message_data["chat_id"], "Выберите опцию:","HTML",start_keyboard)
+                    if message_data["text"]=="/commands":
                         bot.send_message(message_data["chat_id"], "Выберите опцию:","HTML",start_keyboard)
-                    
-                
-            if "callback_query" in last_update:
-                callback_query = last_update["callback_query"]
-                if callback_query['data'] =="show_data":
-                    bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
-                    plot_decorator(callback_query['chat_id'],only_search_keyboard)(raw_graph)()
-                if callback_query['data'] =="pattern_search":
-                    bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
-                    date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
-                            delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
-                    length_of_data = int(bid.shape[0])
-                    print('Data length is', length_of_data)
 
-                    to_what = 37000
-                    all_data = ((bid + ask) / 2)
-                    average_line = ((bid + ask) / 2)
-                    average_line = average_line[:to_what]
-                    pattern_list = []
-                    performance_list = []
-                    pattern_storage(average_line,pattern_list, performance_list) 
-                    pattern_for_recognition =  current_pattern(average_line) 
-                    plot_decorator(callback_query['chat_id'],continue_keyboard)(pattern_recognizer)(pattern_list,pattern_for_recognition,performance_list,all_data,to_what)
                         
-                if callback_query['data']=="continue_search":
-                    if (to_what+1)>=length_of_data:
+                    
+                if "callback_query" in last_update:
+                    callback_query = last_update["callback_query"]
+                    if callback_query['data'] =="show_data":
                         bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
-                        bot.send_message(callback_query["chat_id"],"Паттерны закончились",parse_mode="HTML",reply=start_keyboard)
-                    else:
+                        plot_decorator(callback_query['chat_id'],only_search_keyboard)(raw_graph)()
+                    if callback_query['data'] =="pattern_search":
                         bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
-                        to_what+=1
+                        bot.send_message(callback_query["chat_id"],"<i>Анализируем данные...</i>",parse_mode="HTML",reply=None)
+                        date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
+                                delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
+                        length_of_data = int(bid.shape[0])
+                        
+
+                        to_what = 37000
+                        all_data = ((bid + ask) / 2)
                         average_line = ((bid + ask) / 2)
                         average_line = average_line[:to_what]
                         pattern_list = []
                         performance_list = []
                         pattern_storage(average_line,pattern_list, performance_list) 
+                        bot.send_message(callback_query["chat_id"],"<i>Ещё немного...</i>",parse_mode="HTML",reply=None)
                         pattern_for_recognition =  current_pattern(average_line) 
-                        plot_decorator(callback_query['chat_id'],continue_keyboard)(pattern_recognizer)(pattern_list,pattern_for_recognition,performance_list,all_data,to_what)
+                        plot_decorator(callback_query['chat_id'],continue_keyboard,f"Процент схожести паттернов - {similarity_percentage}%")(pattern_recognizer)(pattern_list,pattern_for_recognition,performance_list,all_data,to_what,similarity_percentage)
+                    if callback_query['data']=="similarity_percentage":
+                        bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                        check = 0
+                        while True:
+                            bot.send_message(callback_query["chat_id"],"<b>Введите процент схожести от 1 до 100:</b>",parse_mode="HTML",reply=None)
+                            while True:
+                                last_update = bot.get_last_update()
+                                if last_update != None:
+                                    if "message" in last_update:
+                                        message_data = last_update["message"]["text"]
+                                        if 1<=int(message_data)<=100:
+                                            bot.send_message(callback_query["chat_id"],f"<b>Вы указали -</b> {message_data}%",parse_mode="HTML",reply=choice_keyboard)
+                                            while True:
+                                                last_update = bot.get_last_update()
+                                                if last_update != None:
+                                                    if "callback_query" in last_update:
+                                                        callback_query = last_update["callback_query"]
+                                                        if callback_query["data"]=="right_percent":
+                                                            bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                                                            similarity_percentage = int(message_data)
+                                                            check=1
+                                                            break
+                                                        elif callback_query["data"]=="wrong_percent":
+                                                            bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                                                            check=2
+                                                            break
+                                                    sleep(3)
+                                        if check==0:
+                                            pass
+                                        else:
+                                            break
+                                sleep(3)
+                            if check==1:
+                                bot.send_message(callback_query["chat_id"], "Выберите опцию:","HTML",start_keyboard)
+                                break
+                            else:
+                                pass
 
-                if callback_query['data']=="stop_search":
-                    bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)   
-                    bot.send_message(callback_query["chat_id"],"Вы остановили поиск",parse_mode="HTML",reply=start_keyboard)  
-                        
-            else:
-                continue
-        sleep(4)
+                                                    
+
+
+
+                            
+                    if callback_query['data']=="continue_search":
+                        if (to_what+1)>=length_of_data:
+                            bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                            bot.send_message(callback_query["chat_id"],"Паттерны закончились",parse_mode="HTML",reply=start_keyboard)
+                        else:
+                            bot.edit_message_caption(callback_query['chat_id'],callback_query['message_id'],caption=None)
+                            bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)
+                            bot.send_message(callback_query["chat_id"],"<i>Анализируем данные...</i>",parse_mode="HTML",reply=None)
+                            to_what+=1
+                            average_line = ((bid + ask) / 2)
+                            average_line = average_line[:to_what]
+                            pattern_list = []
+                            performance_list = []
+                            pattern_storage(average_line,pattern_list, performance_list) 
+                            bot.send_message(callback_query["chat_id"],"<i>Ещё немного...</i>",parse_mode="HTML",reply=None)
+                            pattern_for_recognition =  current_pattern(average_line) 
+                            plot_decorator(callback_query['chat_id'],continue_keyboard,f"Процент схожести паттернов - {similarity_percentage}%")(pattern_recognizer)(pattern_list,pattern_for_recognition,performance_list,all_data,to_what,similarity_percentage)
+
+                    if callback_query['data']=="stop_search":
+                        bot.edit_message_reply_markup(callback_query['chat_id'],callback_query['message_id'],reply=None)   
+                        bot.send_message(callback_query["chat_id"],"Вы остановили поиск",parse_mode="HTML",reply=start_keyboard)  
+                            
+                else:
+                    continue
+            sleep(4)
+    except Exception as err:
+        print(err)
 
 
 if __name__ == '__main__':

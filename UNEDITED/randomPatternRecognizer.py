@@ -61,8 +61,8 @@ def current_pattern(average_line):
     return pattern_for_recognition
 
 
-def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all_data,to_what):
-    '''Функция находит паттерны на графике, которые схожи между собой на 50% и больше.'''
+def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all_data,to_what,input_similarity=50):
+    
 
     predicted_results = []
     found_patterns = 0
@@ -74,7 +74,7 @@ def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all
 
         similarity = (sum(map(float, similarity_of_ps))) / 30.0
 
-        if similarity > 50:
+        if similarity > input_similarity:
             patdex = pattern_list.index(each_pattern)
 
             found_patterns = 1
@@ -110,6 +110,8 @@ def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all
         plt.grid(True)
         plt.title('Pattern recognition')
         return plt
+    if found_patterns==0:
+        return True
 
 
 def raw_graph():
