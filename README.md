@@ -5,5 +5,6 @@ The telegram bot analyzes data and returns n% similar patterns, where n is a num
 
 # Authors
 Veronika Golanova - https://github.com/vegolanova
+
 Dmytro Dashkin - https://github.com/Da6hkin
 
