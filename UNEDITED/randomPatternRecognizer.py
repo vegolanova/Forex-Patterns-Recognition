@@ -4,13 +4,10 @@ import numpy as np
 import functools
 import time
 
-
 total_start_time = time.time()
 
 date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
                                delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
-
-
 
 def PercentChange(starting_point, current_point):
     standart_deviation = 0.00001
@@ -23,7 +20,6 @@ def PercentChange(starting_point, current_point):
             return deviation
     except:
         return standart_deviation
-
 
 def PatternStorage(average_line,pattern_list,performance_list):
     pat_start_time = time.time()
@@ -70,9 +66,7 @@ def PatternRecognizer(pattern_list,pattern_for_recognition,performance_list,all_
 
         if similarity > 50:
             patdex = pattern_list.index(each_pattern)
-
             found_patterns = 1
-
             xp = list(range(1, 31))
             plot_pattern_list.append(each_pattern)
 
@@ -105,7 +99,6 @@ def PatternRecognizer(pattern_list,pattern_for_recognition,performance_list,all_
         plt.title('Pattern recognition')
         return plt
 
-
 def RawGraph():
     fig = plt.figure(figsize=(10, 7))
     ax1 = plt.subplot2grid((90, 90), (0, 0), rowspan=90, colspan=90)
@@ -123,10 +116,6 @@ def RawGraph():
     ax1_2.fill_between(date, 0, (ask - bid), facecolor='g', alpha=.3)
 
     plt.subplots_adjust(bottom=.23)
-
     plt.grid(True)
     
     return plt
-
-
-
