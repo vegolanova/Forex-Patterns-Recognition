@@ -9,7 +9,7 @@ import time
 import matplotlib.dates as mdates
 from UNEDITED.randomPatternRecognizer import raw_graph,pattern_recognizer,pattern_storage,current_pattern
 
-TOKEN = "1747677640:AAFdtPvK4GqQgtA5geERzcNrWv6Ene-v8L8"
+TOKEN = ""
 
 
 
