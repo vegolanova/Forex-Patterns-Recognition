@@ -4,16 +4,12 @@ import numpy as np
 import functools
 import time
 
-
 total_start_time = time.time()
 
 date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
                                delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
 
-
-
-def percent_change(starting_point, current_point):
-    '''Функция вычисляет процентную разницу между предыдущей и текущей точкой на графике.'''
+def PercentChange(starting_point, current_point):
     standart_deviation = 0.00001
 
     try:
@@ -25,14 +21,13 @@ def percent_change(starting_point, current_point):
     except:
         return standart_deviation
 
-
 def pattern_storage(average_line,pattern_list,performance_list):
     pat_start_time = time.time()
     x = len(average_line) - 60
     y = 11
 
     while y < x:
-        pattern = [percent_change(average_line[y - 30], average_line[y - i]) for i in range(29, -1, -1)]
+        pattern = [PercentChange(average_line[y - 30], average_line[y - i]) for i in range(29, -1, -1)]
         outcome_range = average_line[y + 20:y + 30]
         current_point = average_line[y]
 
@@ -42,21 +37,18 @@ def pattern_storage(average_line,pattern_list,performance_list):
             print(str(e))
             avgOutcome = 0
 
-        future_outcome = percent_change(current_point, avgOutcome)
+        future_outcome = PercentChange(current_point, avgOutcome)
         pattern_list.append(pattern)
         performance_list.append(future_outcome)
 
         y += 1
 
     pat_end_time = time.time()
-    print('Pattern storage took: ', pat_end_time - pat_start_time, 'seconds')
-
-
-def current_pattern(average_line):
-    '''Функция вычисляет список процентной разницы 30 взятых точек'''
-
     
-    pattern_for_recognition = [percent_change(average_line[-31], average_line[i]) for i in range(-30, 0, 1)]
+
+
+def current_pattern(average_line):   
+    pattern_for_recognition = [PercentChange(average_line[-31], average_line[i]) for i in range(-30, 0, 1)]
 
     return pattern_for_recognition
 
@@ -69,16 +61,14 @@ def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all
     plot_pattern_list = []
     
     for each_pattern in pattern_list:
-        similarity_of_ps = [(100.00 - abs(percent_change(each_pattern[i], pattern_for_recognition[i]))) for i in
+        similarity_of_ps = [(100.00 - abs(PercentChange(each_pattern[i], pattern_for_recognition[i]))) for i in
                             range(30)]
 
         similarity = (sum(map(float, similarity_of_ps))) / 30.0
 
         if similarity > input_similarity:
             patdex = pattern_list.index(each_pattern)
-
             found_patterns = 1
-
             xp = list(range(1, 31))
             plot_pattern_list.append(each_pattern)
 
@@ -100,7 +90,7 @@ def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all
 
         real_outcome_range = all_data[to_what + 20:to_what + 30]
         real_average_outcome = functools.reduce(lambda x, y: x + y, real_outcome_range) / len(real_outcome_range)
-        real_move = percent_change(all_data[to_what], real_average_outcome)
+        real_move = PercentChange(all_data[to_what], real_average_outcome)
         predicted_average_results = functools.reduce(lambda x, y: x + y, predicted_results) / len(predicted_results)
 
         plt.scatter(40, real_move, c='#54fff7', s=25)
@@ -113,10 +103,7 @@ def pattern_recognizer(pattern_list,pattern_for_recognition,performance_list,all
     if found_patterns==0:
         return True
 
-
 def raw_graph():
-    '''Функция возвращает график, визуализирующий исходные данные'''
-
     fig = plt.figure(figsize=(10, 7))
     ax1 = plt.subplot2grid((90, 90), (0, 0), rowspan=90, colspan=90)
     ax1.set_title('Forex data of 1 day')
@@ -133,10 +120,6 @@ def raw_graph():
     ax1_2.fill_between(date, 0, (ask - bid), facecolor='g', alpha=.3)
 
     plt.subplots_adjust(bottom=.23)
-
     plt.grid(True)
     
     return plt
-
-
-

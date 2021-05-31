@@ -25,7 +25,6 @@ class BotHandler:
         params = {'timeout': timeout}
         response = requests.get(self.api_url + method, params)
         result_json = response.json()['result']
-        print(result_json)
         return result_json
 
     def get_last_update(self):
