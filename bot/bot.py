@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.dates as mdates
 from UNEDITED.randomPatternRecognizer import raw_graph, pattern_recognizer, pattern_storage, current_pattern
 
-TOKEN = ""
+TOKEN = "1747677640:AAFdtPvK4GqQgtA5geERzcNrWv6Ene-v8L8"
 
 
 class BotHandler:
@@ -194,9 +194,15 @@ def main():
                                 if last_update != None:
                                     if "message" in last_update:
                                         message_data = last_update["message"]["text"]
-                                        if 1 <= int(message_data) <= 100:
-                                            bot.send_message(
-                                                callback_query["chat_id"], f"<b>Вы указали -</b> {message_data}%", parse_mode="HTML", reply=choice_keyboard)
+                                        try:
+                                            if int(message_data)<1 or int(message_data)>100:
+                                                bot.send_message(callback_query["chat_id"],"Введите пожалуйста число от 1 до 100",parse_mode="HTML",reply=None)
+                                                continue 
+                                        except:
+                                            bot.send_message(callback_query["chat_id"],"Введите пожалуйста число от 1 до 100",parse_mode="HTML",reply=choice_keyboard)
+                                            continue
+                                        if 1<=int(message_data)<=100:
+                                            bot.send_message(callback_query["chat_id"],f"<b>Вы указали -</b> {message_data}%",parse_mode="HTML",reply=choice_keyboard)
                                             while True:
                                                 last_update = bot.get_last_update()
                                                 if last_update != None:
