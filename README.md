@@ -1,12 +1,6 @@
 # Forex Patterns Recognition
-Forex bid/ask currency pair pattern analyzer.
+Анализатор паттернов в трейдинге валют.
 
-The telegram bot analyzes data and returns n% similar patterns, where n is a number ranging from 1 to 100 that the user can input. The bot also provides predicted outcome and actual outcome of the main pattern that is being compared.
-
-Bot: https://t.me/forex_patterns_bot
-
-# Authors
-Veronika Golanova - https://github.com/vegolanova
-
-Dmytro Dashkin - https://github.com/Da6hkin
+# Что делает
+Программа принимает Форекс bid/ask данные о паре валют и анализирует схожие между собой паттерны, прогнозируя прибыльные и убыточные исходы трейдинга. Анализ можно провести воспользовавшись телеграм-ботом.
 
