@@ -1,48 +1,51 @@
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import numpy as np
 import functools
 import time
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 total_start_time = time.time()
 
 date, bid, ask = np.recfromtxt('GBPUSD1d.txt', unpack=True,
                                delimiter=',', converters={0: lambda x: mdates.datestr2num(x.decode('utf8'))})
 
+COMPARISON_POINTS = 30
 
-def PercentChange(starting_point, current_point):
-    standart_deviation = 0.00001
+
+def percent_change(starting_point, current_point):
+    STANDART_DEVIATION = 0.00001
 
     try:
         deviation = (((float(current_point) - starting_point) /
                      abs(starting_point)) * 100.00)
         if deviation == 0.0:
-            return standart_deviation
+            return STANDART_DEVIATION
         else:
-            return deviation
-    except:
-        return standart_deviation
-
-
+            return float(deviation)
+    except ValueError:
+        return STANDART_DEVIATION
+      
+      
 def pattern_storage(average_line, pattern_list, performance_list):
     pat_start_time = time.time()
-    avg_line_for_prediction = len(average_line) - 60
+    STEPS_AHEAD = 60
+    avg_line_for_prediction = len(average_line) - STEPS_AHEAD
     starting_point = 11
 
     while starting_point < avg_line_for_prediction:
-        pattern = [PercentChange(average_line[starting_point - 30],
+        pattern = [percent_change(average_line[starting_point - COMPARISON_POINTS], 
                                  average_line[starting_point - i]) for i in range(29, -1, -1)]
-        outcome_range = average_line[starting_point + 20:starting_point + 30]
+        outcome_range = average_line[starting_point + 20:starting_point + COMPARISON_POINTS]
         current_point = average_line[starting_point]
 
         try:
-            avgOutcome = functools.reduce(
+            avg_outcome = functools.reduce(
                 lambda x, y: x + y, outcome_range) / len(outcome_range)
         except Exception as e:
             print(str(e))
-            avgOutcome = 0
+            avg_outcome = 0
 
-        future_outcome = PercentChange(current_point, avgOutcome)
+        future_outcome = percent_change(current_point, avg_outcome)
         pattern_list.append(pattern)
         performance_list.append(future_outcome)
 
@@ -52,23 +55,24 @@ def pattern_storage(average_line, pattern_list, performance_list):
 
 
 def current_pattern(average_line):
-    pattern_for_recognition = [PercentChange(
+    pattern_for_recognition = [percent_change(
         average_line[-31], average_line[i]) for i in range(-30, 0, 1)]
 
     return pattern_for_recognition
 
 
-def pattern_recognizer(pattern_list, pattern_for_recognition, performance_list, all_data, to_what, input_similarity=50):
+def pattern_recognizer(pattern_list, pattern_for_recognition, performance_list,
+                       all_data, to_what, input_similarity=50):
 
     predicted_results = []
     found_patterns = 0
     plot_pattern_list = []
 
     for each_pattern in pattern_list:
-        similarity_of_ps = [(100.00 - abs(PercentChange(each_pattern[i], pattern_for_recognition[i]))) for i in
-                            range(30)]
+        similarity_of_ps = [(100.00 - abs(percent_change(each_pattern[i], 
+                                                        pattern_for_recognition[i]))) for i in range(30)]
 
-        similarity = (sum(map(float, similarity_of_ps))) / 30.0
+        similarity = (sum(map(float, similarity_of_ps))) / COMPARISON_POINTS
 
         if similarity > input_similarity:
             patdex = pattern_list.index(each_pattern)
@@ -96,7 +100,7 @@ def pattern_recognizer(pattern_list, pattern_for_recognition, performance_list, 
         real_outcome_range = all_data[to_what + 20:to_what + 30]
         real_average_outcome = functools.reduce(
             lambda x, y: x + y, real_outcome_range) / len(real_outcome_range)
-        real_move = PercentChange(all_data[to_what], real_average_outcome)
+        real_move = percent_change(all_data[to_what], real_average_outcome)
         predicted_average_results = functools.reduce(
             lambda x, y: x + y, predicted_results) / len(predicted_results)
 

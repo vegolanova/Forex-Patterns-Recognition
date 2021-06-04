@@ -16,8 +16,6 @@ all_data = ((bid + ask) / 2)
 average_line = ((bid + ask) / 2)
 to_what = 37000
 
-
-
 class BotHandler:
 
     def __init__(self, token):
